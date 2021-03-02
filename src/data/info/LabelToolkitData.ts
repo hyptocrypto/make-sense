@@ -27,7 +27,7 @@ export const LabelToolkitData: ILabelToolkit[] = [
     {
         labelType: LabelType.AUTORECT,
         headerText: "AutoRect",
-        imageSrc: "ico/rectangle.png",
+        imageSrc: "ico/autorectangle.png",
         imageAlt: "rectangle",
         projectType: ProjectType.OBJECT_DETECTION,
     },

@@ -1,24 +1,25 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 import './ExportLabelPopup.scss'
-import {AnnotationFormatType} from "../../../data/enums/AnnotationFormatType";
-import {RectLabelsExporter} from "../../../logic/export/RectLabelsExporter";
-import {LabelType} from "../../../data/enums/LabelType";
-import {ILabelFormatData} from "../../../interfaces/ILabelFormatData";
-import {PointLabelsExporter} from "../../../logic/export/PointLabelsExport";
-import {PolygonLabelsExporter} from "../../../logic/export/polygon/PolygonLabelsExporter";
-import {PopupActions} from "../../../logic/actions/PopupActions";
-import {LineLabelsExporter} from "../../../logic/export/LineLabelExport";
-import {TagLabelsExporter} from "../../../logic/export/TagLabelsExport";
+import { AnnotationFormatType } from "../../../data/enums/AnnotationFormatType";
+import { RectLabelsExporter } from "../../../logic/export/RectLabelsExporter";
+import { AutoRectLabelsExporter } from "../../../logic/export/AutoRectLabelsExporter"
+import { LabelType } from "../../../data/enums/LabelType";
+import { ILabelFormatData } from "../../../interfaces/ILabelFormatData";
+import { PointLabelsExporter } from "../../../logic/export/PointLabelsExport";
+import { PolygonLabelsExporter } from "../../../logic/export/polygon/PolygonLabelsExporter";
+import { PopupActions } from "../../../logic/actions/PopupActions";
+import { LineLabelsExporter } from "../../../logic/export/LineLabelExport";
+import { TagLabelsExporter } from "../../../logic/export/TagLabelsExport";
 import GenericLabelTypePopup from "../GenericLabelTypePopup/GenericLabelTypePopup";
-import {ExportFormatData} from "../../../data/ExportFormatData";
-import {AppState} from "../../../store";
-import {connect} from "react-redux";
+import { ExportFormatData } from "../../../data/ExportFormatData";
+import { AppState } from "../../../store";
+import { connect } from "react-redux";
 
 interface IProps {
     activeLabelType: LabelType,
 }
 
-const ExportLabelPopup: React.FC <IProps> = ({activeLabelType}) => {
+const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     const [labelType, setLabelType] = useState(activeLabelType);
     const [exportFormatType, setExportFormatType] = useState(null);
 
@@ -27,6 +28,8 @@ const ExportLabelPopup: React.FC <IProps> = ({activeLabelType}) => {
             case LabelType.RECT:
                 RectLabelsExporter.export(exportFormatType);
                 break;
+            case LabelType.AUTORECT:
+                AutoRectLabelsExporter.export(exportFormatType);
             case LabelType.POINT:
                 PointLabelsExporter.export(exportFormatType);
                 break;
@@ -90,7 +93,7 @@ const ExportLabelPopup: React.FC <IProps> = ({activeLabelType}) => {
         setExportFormatType(null);
     }
 
-    return(
+    return (
         <GenericLabelTypePopup
             activeLabelType={labelType}
             title={`Export ${labelType.toLowerCase()} annotations`}

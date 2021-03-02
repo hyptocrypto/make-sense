@@ -120,20 +120,20 @@ export class ImageActions {
         store.dispatch(updateActiveLabelId(rect.id));
         break;
       case LabelType.AUTORECT:
-        const auto_rect = LabelsSelector.getActiveRectLabel();
-        newImageData.labelRects = imageData.labelRects.map(
-          (labelRectangle: LabelAutoRect) => {
-            if (labelRectangle.id === auto_rect.id) {
+        const auto_rect = LabelsSelector.getActiveAutoRectLabel();
+        newImageData.labelAutoRects = imageData.labelAutoRects.map(
+          (labelAutoRectangle: LabelAutoRect) => {
+            if (labelAutoRectangle.id === auto_rect.id) {
               return {
-                ...labelRectangle,
+                ...labelAutoRectangle,
                 labelId: labelNames[labelIndex].id,
                 status: LabelStatus.ACCEPTED,
               };
             }
-            return labelRectangle;
+            return labelAutoRectangle;
           }
         );
-        store.dispatch(updateActiveLabelId(rect.id));
+        store.dispatch(updateActiveLabelId(auto_rect.id));
         break;
       case LabelType.POLYGON:
         const polygon = LabelsSelector.getActivePolygonLabel();

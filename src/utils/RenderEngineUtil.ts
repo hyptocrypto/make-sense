@@ -1,14 +1,16 @@
-import {EditorData} from "../data/EditorData";
-import {RectUtil} from "./RectUtil";
-import {store} from "../index";
-import {CustomCursorStyle} from "../data/enums/CustomCursorStyle";
-import {updateCustomCursorStyle} from "../store/general/actionCreators";
-import {IPoint} from "../interfaces/IPoint";
-import {PointUtil} from "./PointUtil";
-import {IRect} from "../interfaces/IRect";
-import {ILine} from "../interfaces/ILine";
-import {LineUtil} from "./LineUtil";
-import {ISize} from "../interfaces/ISize";
+import { EditorData } from "../data/EditorData";
+import { RectUtil } from "./RectUtil";
+import { AutoRectUtil } from "./AutoRectUtil";
+import { store } from "../index";
+import { CustomCursorStyle } from "../data/enums/CustomCursorStyle";
+import { updateCustomCursorStyle } from "../store/general/actionCreators";
+import { IPoint } from "../interfaces/IPoint";
+import { PointUtil } from "./PointUtil";
+import { IRect } from "../interfaces/IRect";
+import { IAutoRect } from "../interfaces/IAutoRect";
+import { ILine } from "../interfaces/ILine";
+import { LineUtil } from "./LineUtil";
+import { ISize } from "../interfaces/ISize";
 
 export class RenderEngineUtil {
     public static calculateImageScale(data: EditorData): number {
@@ -20,12 +22,12 @@ export class RenderEngineUtil {
     }
 
     public static isMouseOverCanvas(data: EditorData): boolean {
-        return RectUtil.isPointInside({x: 0, y: 0, ...data.viewPortContentSize}, data.mousePositionOnViewPortContent);
+        return RectUtil.isPointInside({ x: 0, y: 0, ...data.viewPortContentSize }, data.mousePositionOnViewPortContent);
     }
 
     public static transferPointFromImageToViewPortContent(point: IPoint, data: EditorData): IPoint {
         const scale = RenderEngineUtil.calculateImageScale(data);
-        return PointUtil.add(PointUtil.multiply(point, 1/scale), data.viewPortContentImageRect);
+        return PointUtil.add(PointUtil.multiply(point, 1 / scale), data.viewPortContentImageRect);
     }
 
     public static transferPolygonFromImageToViewPortContent(polygon: IPoint[], data: EditorData): IPoint[] {
@@ -57,7 +59,7 @@ export class RenderEngineUtil {
 
     public static transferRectFromViewPortContentToImage(rect: IRect, data: EditorData): IRect {
         const scale = RenderEngineUtil.calculateImageScale(data);
-        return RectUtil.translate(RectUtil.scaleRect(rect, 1/scale), data.viewPortContentImageRect);
+        return RectUtil.translate(RectUtil.scaleRect(rect, 1 / scale), data.viewPortContentImageRect);
     }
 
     public static transferRectFromImageToViewPortContent(rect: IRect, data: EditorData): IRect {
@@ -68,6 +70,11 @@ export class RenderEngineUtil {
         };
 
         return RectUtil.scaleRect(RectUtil.translate(rect, translation), scale);
+    }
+
+    public static transferAutoRectFromImageToViewPortContent(rect: IRect, data: EditorData): IRect {
+
+        return rect;
     }
 
     public static wrapDefaultCursorStyleInCancel(data: EditorData) {
