@@ -30,6 +30,7 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
                 break;
             case LabelType.AUTORECT:
                 AutoRectLabelsExporter.export(exportFormatType);
+                break;
             case LabelType.POINT:
                 PointLabelsExporter.export(exportFormatType);
                 break;

@@ -1,7 +1,7 @@
-import {ImageData} from "../store/labels/types";
+import { ImageData } from "../store/labels/types";
 import uuidv4 from "uuid/v4";
-import {FileUtil} from "./FileUtil";
-import {ImageRepository} from "../logic/imageRepository/ImageRepository";
+import { FileUtil } from "./FileUtil";
+import { ImageRepository } from "../logic/imageRepository/ImageRepository";
 
 export class ImageDataUtil {
     public static createImageDataFromFileData(fileData: File): ImageData {
@@ -43,7 +43,7 @@ export class ImageDataUtil {
             const missingImages = images.filter((i: ImageData) => !i.loadStatus);
             const missingImagesFiles = missingImages.map((i: ImageData) => i.fileData);
             FileUtil.loadImages(missingImagesFiles)
-                .then((images:HTMLImageElement[]) => {
+                .then((images: HTMLImageElement[]) => {
                     ImageRepository.storeImages(missingImages.map((i: ImageData) => i.id), images);
                     resolve()
                 })

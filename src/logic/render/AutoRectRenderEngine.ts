@@ -5,6 +5,7 @@ import { AutoRectUtil } from "../../utils/AutoRectUtil";
 import { DrawUtil } from "../../utils/DrawUtil";
 import { store } from "../..";
 import { ImageData, LabelAutoRect } from "../../store/labels/types";
+import { ImageRepository } from "../../logic/imageRepository/ImageRepository"
 import {
     updateActiveLabelId,
     updateFirstLabelCreatedFlag,
@@ -74,15 +75,37 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
             const mousePositionSnapped: IPoint = RectUtil.snapPointToRect(data.mousePositionOnViewPortContent, data.viewPortContentImageRect);
             const activeLabelAutoRect: LabelAutoRect = LabelsSelector.getActiveAutoRectLabel();
             if (!!this.startCreateRectPoint) {
-                const pointOnImage: IPoint = RenderEngineUtil.transferPointFromViewPortContentToImage(data.mousePositionOnViewPortContent, data)
+
                 const minX: number = this.startCreateRectPoint.x;
                 const minY: number = this.startCreateRectPoint.y;
                 const box_width: number = 60
                 const box_height: number = 60
-
                 const rect = { x: minX - (box_width / 2), y: minY - (box_height / 2), width: box_width, height: box_height }
+                const scaled_rect = RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data)
 
-                this.addAutoRectLabel(RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data))
+
+
+                const imageData: ImageData = LabelsSelector.getActiveImageData();
+                const imageid: string = imageData.id;
+                const img_data: any = ImageRepository.getById(imageid)
+                const img: HTMLImageElement = new Image()
+                img.src = img_data.src
+                
+                const canvas: any = document.createElement("canvas")
+                canvas.width = box_width
+                canvas.height = box_height
+                const ctx = canvas.getContext("2d");
+                console.log(img)
+                ctx.drawImage(img, scaled_rect.x, scaled_rect.y, rect.width, rect.height, 0, 0, box_width, box_height)
+                const crop_img: HTMLImageElement = new Image()
+                crop_img.src = canvas.toDataURL();
+
+                var w = window.open("")
+                w.document.write(crop_img.outerHTML)
+                
+
+
+                this.addAutoRectLabel(scaled_rect)
             }
 
             if (!!this.startResizeRectAnchor && !!activeLabelAutoRect) {
