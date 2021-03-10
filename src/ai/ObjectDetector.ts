@@ -11,6 +11,7 @@ export class ObjectDetector {
     private static model: ObjectDetection;
 
     public static loadModel(callback?: () => any) {
+        console.log("loading model")
         cocoSsd
             .load()
             .then((model: ObjectDetection) => {
@@ -39,5 +40,22 @@ export class ObjectDetector {
                 // TODO
                 throw new Error(error);
             })
+        }
+        
+
+    public static predict_auto_rect(image: HTMLImageElement, callback?: (predictions: DetectedObject[]) => any) {
+        if (!ObjectDetector.model) return;
+
+        ObjectDetector.model
+            .detect(image)
+            .then((predictions: DetectedObject[]) => {
+            console.log(predictions)
+            })
+            .catch((error) => {
+                // TODO
+                throw new Error(error);
+            })
     }
 }
+
+
