@@ -1,7 +1,5 @@
-import { ObjectDetector } from "../../ai/ObjectDetector";
-import { DetectedObject } from "@tensorflow-models/coco-ssd";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
-
+import * as tf from '@tensorflow/tfjs'
 
 import { IPoint } from "../../interfaces/IPoint";
 import { IAutoRect } from "../../interfaces/IAutoRect";
@@ -31,8 +29,7 @@ import { EditorActions } from "../actions/EditorActions";
 import { GeneralSelector } from "../../store/selectors/GeneralSelector";
 import { LabelStatus } from "../../data/enums/LabelStatus";
 import { LabelUtil } from "../../utils/LabelUtil";
-import { COCOAnnotationDeserializationError } from "../import/coco/COCOErrors";
-import { POINT_CONVERSION_COMPRESSED } from "constants";
+
 import { AISelector } from "../../store/selectors/AISelector";
 
 
@@ -48,16 +45,6 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
     public constructor(canvas: HTMLCanvasElement) {
         super(canvas);
         this.labelType = LabelType.AUTORECT;
-
-
-        const detect_objects = async (img: HTMLImageElement) => {
-            const model = await cocoSsd.load();
-            if (AISelector.isAIObjectDetectorModelLoaded) {
-                console.log(true);
-            };
-            const predictions = await model.detect(img);
-            return predictions;
-        };
     }
 
 
@@ -98,8 +85,8 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
                 console.log(data)
                 const minX: number = this.startCreateRectPoint.x;
                 const minY: number = this.startCreateRectPoint.y;
-                const box_width: number = 80 // Should be dynamic based on desired object size
-                const box_height: number = 80
+                const box_width: number = 50 // Should be dynamic based on desired object size
+                const box_height: number = 50
                 const rect = { x: minX - (box_width / 2), y: minY - (box_height / 2), width: box_width, height: box_height }
                 console.log(rect)
 
@@ -129,24 +116,28 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
                 const crop_img: HTMLImageElement = new Image()
                 crop_img.src = canvas.toDataURL();
 
+                // TODO: Load model on page load, not on first click. 
                 (async () => {
                     console.log("Startign")
-                    const model = await cocoSsd.load();
-                    if (AISelector.isAIObjectDetectorModelLoaded) {
-                        console.log(true);
-                    };
-                    const preds = await model.detect(crop_img);
+                    const model = await tf.loadGraphModel('http://192.168.1.23:5000/static/tfjs_effloc_model/model.json')
+                    console.log(model)
+                    const preds = model.predict(tf.randomNormal([1, 4, 224, 224]))
                     console.log(preds)
-                    console.log(preds[0].bbox[0])
-                    const object_rect = {
-                        x: (scaled_rect.x + preds[0].bbox[0]),
-                        y: (scaled_rect.y + preds[0].bbox[1]),
-                        width: preds[0].bbox[2],
-                        height: preds[0].bbox[3]
-                    };
-                    this.addAutoRectLabel(object_rect)
+                    // const model = await cocoSsd.load();
+                    // const preds = await model.detect(crop_img);
+                    // if (preds[0] === undefined) {
+                    //     return;
+                    // }
+                    // console.log(preds[0].class)
+                    // const object_rect = {
+                    //     x: (scaled_rect.x + preds[0].bbox[0]),
+                    //     y: (scaled_rect.y + preds[0].bbox[1]),
+                    //     width: preds[0].bbox[2],
+                    //     height: preds[0].bbox[3]
+                    // };
+                    // this.addAutoRectLabel(object_rect)
                 })();
-                this.addAutoRectLabel(scaled_rect)
+                // this.addAutoRectLabel(scaled_rect)
             }
 
             if (!!this.startResizeRectAnchor && !!activeLabelAutoRect) {
