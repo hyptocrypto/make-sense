@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, json, url_for
+from flask import Flask, request, Response, json, url_for, send_from_directory
 from flask_cors import CORS
 import os
 import re 
@@ -12,11 +12,9 @@ CORS(app)
 def json_data():
     return f"<a href={url_for('static', filename='tfjs_effloc_model/model.json')}>file</a>"
 
-
+@app.route('/onnx', methods=['GET'])
+def json_data_onnx():
+   # return f"<a href={url_for('static', filename='tfjs_effloc_model/effloc.onnx')}>file</a>"
+    return send_from_directory("static/tfjs_effloc_model/effloc.onnx")
 if __name__ == '__main__':
-    # GET HOST MACHINE LOCAL IP
-    cmd = 'ifconfig | grep 192'
-    inet = subprocess.check_output(cmd, shell=True)
-    ip = re.search('(\s192.[0-9]*.[0-9]*.[0-9]*.\s)', inet.decode("utf-8")).group().strip()    
-   
-    app.run(host=ip, port="5000", debug=True)
+    app.run( port="5000", debug=True)
