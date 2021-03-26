@@ -1,9 +1,7 @@
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
-import * as tf from '@tensorflow/tfjs'
-
 import { IPoint } from "../../interfaces/IPoint";
 import { IRect } from "../../interfaces/IRect";
 import { RectUtil } from "../../utils/RectUtil";
+import { AutoRectUtil } from "../../utils/AutoRectUtil";
 import { DrawUtil } from "../../utils/DrawUtil";
 import { store } from "../..";
 import { ImageData, LabelAutoRect } from "../../store/labels/types";
@@ -31,30 +29,18 @@ import { LabelUtil } from "../../utils/LabelUtil";
 import { PopupWindowType } from "../../data/enums/PopupWindowType";
 import { updateActivePopupType } from "../../store/general/actionCreators";
 import { PopupActions } from "../actions/PopupActions";
-import { Tensor, InferenceSession } from "onnxjs";
+import { AutoRectDetector } from "../../ai/AutoRectDetector"
 
-
-
-import { AISelector } from "../../store/selectors/AISelector";
-import * as image_js from "image-js"
-import { ImageLoadManager } from "../imageRepository/ImageLoadManager";
-
-// const Image = require('image-js');
-const ndarray = require("ndarray");
-var level = require('level');
-var db = level(__dirname + '/db');
-var fs = require('level-fs')(db);
-const ObjectsToCsv = require('objects-to-csv');
 
 
 export class AutoRectRenderEngine extends BaseRenderEngine {
     private config: RenderEngineConfig = new RenderEngineConfig();
-
     // =================================================================================================================
     // STATE
     // =================================================================================================================
-    private startCreateRectPoint: IPoint;
+    private startCreateAutoRectPoint: IPoint;
     private startResizeRectAnchor: RectAnchor;
+    public model = new AutoRectDetector();
 
     private isModelLoaded: boolean = false;
 
@@ -62,8 +48,6 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
         super(canvas);
         this.labelType = LabelType.AUTORECT;
     }
-
-
 
     // =================================================================================================================
     // EVENT HANDLERS
@@ -97,189 +81,55 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
         if (!!data.viewPortContentImageRect) {
             const mousePositionSnapped: IPoint = RectUtil.snapPointToRect(data.mousePositionOnViewPortContent, data.viewPortContentImageRect);
             const activeLabelAutoRect: LabelAutoRect = LabelsSelector.getActiveAutoRectLabel();
-            if (!!this.startCreateRectPoint) {
-                const minX: number = this.startCreateRectPoint.x;
-                const minY: number = this.startCreateRectPoint.y;
+            if (!!this.startCreateAutoRectPoint) {
+                const minX: number = this.startCreateAutoRectPoint.x;
+                const minY: number = this.startCreateAutoRectPoint.y;
                 const box_width: number = 80 // Should be dynamic based on desired object size
-                const box_height: number = 80
-                const rect = { x: minX - (box_width / 2), y: minY - (box_height / 2), width: box_width, height: box_height }
+                const box_height: number = 80 // Should be dynamic based on desired object size
 
-                const scaled_rect = RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data)
+                // Create rect within crosshairs on viewport and image
+                const rect = { 
+                    x: minX - (box_width / 2),
+                    y: minY - (box_height / 2), 
+                    width: box_width, 
+                    height: box_height}
+
+                const scaled_rect = RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data);
+
 
                 // Create Image element from current image data
                 const imageData: ImageData = LabelsSelector.getActiveImageData();
-                const imageid: string = imageData.id;
-                const img_data: any = ImageRepository.getById(imageid);
-                const img: HTMLImageElement = new Image();
-                img.src = img_data.src;
 
-                // Draw croped image onto canvas
-                const canvas: any = document.createElement("canvas");
-                canvas.width = 224;
-                canvas.height = 224;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img,
-                    scaled_rect.x, scaled_rect.y,
-                    scaled_rect.width,
-                    scaled_rect.height,
-                    0, 0,
-                    224,
-                    224
-                );
-                const ctx_data = ctx.getImageData(0, 0, 224, 224);
+                // const imageid: string = imageData.id;
 
+                const img_data = ImageRepository.getById(imageData.id);
+                
+                // Grab crop of image
+                const crop_data  = AutoRectUtil.make_crop(scaled_rect, img_data);
 
-                // const crop_img: HTMLImageElement = new Image()
-                // crop_img.src = canvas.toDataURL();
-                // var w = window.open("");
-                // w.document.write(crop_img.outerHTML);
-
-                const w = window.open("");
-
-
-
-                // const [newimg, rgba] = this.reshape_image_data(ctx_data.data)
-                // const input_img = this.normalize_image_data(rgba[0], rgba[1], rgba[2], rgba[3])
-                // const test_newimg = ndarray(new Float32Array(newimg), [1, 4, 224, 224])
-                // const crop_img: HTMLImageElement = new Image()
-                // crop_img.src = canvas.toDataURL();
-                // w.document.write(String(input_img));
-
-
-                // TODO: Load model on page load, not on first click. 
+                // Run prediction on cropped image and plot bounding box 
                 (async () => {
-                    // new_ctx.drawImage(crop_img, 0, 0, scaled_rect.width, scaled_rect.height);
-                    // let crop_img_canvas = new_ctx.getImageData(0, 0, 224, 224)
-                    // console.log(crop_img_canvas)
-                    // let uint_ary: Uint8ClampedArray = crop_img_canvas.data.toString();
-
-                    // if (!this.isModelLoaded) {
-                    //     store.dispatch(updateActivePopupType(PopupWindowType.LOADER));
-                    // }
-                    const session = new InferenceSession({ backendHint: "cpu" });
-                    await session.loadModel("http://127.0.0.1:5000/static/tfjs_effloc_model/effloc.onnx")
-
-                    const [newimg, rgba] = this.reshape_image_data(ctx_data.data)
-                    console.log(ctx_data)
-                    console.log("THIS IS NE", newimg)
-                    console.log(rgba)
-
-                    // const new_canv: any = document.createElement("canvas")
-                    // const new_ctx = new_canv.getContext("2d");
-
-                    // var pallet = new_ctx.getImageData(0, 0, 224, 224)
-                    // pallet.data.set(new Uint8ClampedArray(newimg))
-
-                    // new_ctx.putImageData(pallet, 0, 0)
-
-                    // const testimg: HTMLImageElement = new Image()
-                    // testimg.src = new_canv.toDataURL();
-
-                    // var w = window.open("")
-                    // w.document.write(testimg.outerHTML)
-                    // const dataProcessed = ndarray(new Float32Array(224 * 224 * 4), [1, 4, 224, 224]);
-
-                    const input_img = this.normalize_image_data(rgba[0], rgba[1], rgba[2], rgba[3])
-
-
-
-                    const dataProcessed = ndarray(new Float32Array(input_img), [1, 224, 224, 4]).transpose(0, 3, 1, 2)
-                    console.log(dataProcessed)
-
-
-                    const input = new onnx.Tensor(dataProcessed.data, "float32", [1, 4, 224, 224])
-
-
-
-
-
-                    console.log(input)
-
-                    const outputMap = await session.run([input]);
-                    const outputTensor = outputMap.values().next().value;
-
-                    const preds = outputTensor.data
-                    console.log(preds)
-
-                    const x_scale_ratio = scaled_rect.width / 224
-                    const y_scale_ratio = scaled_rect.width / 224
-                    // console.log(x_scale_ratio)
-
-                    // console.log(typeof (outputTensor.data[0]))
-                    // console.log(outputTensor.data[0])
-                    const predx = outputTensor.data[0]
-                    // console.log(predx)
-                    const predy = outputTensor.data[1]
-                    const pred_width = outputTensor.data[2]
-                    const pred_height = outputTensor.data[3]
-
-                    // console.log(typeof (predx))
-                    const new_box_centerx = (predx as Number as number) * (224.0 * x_scale_ratio)
-                    const new_box_centery = (predy as Number as number) * (224.0 * y_scale_ratio)
-                    const new_box_width = (pred_width as Number as number) * (224.0 * x_scale_ratio)
-                    const new_box_height = (pred_height as Number as number) * (224.0 * y_scale_ratio)
-
-                    const rel_new_box_centerx = (predx as Number as number) * (224.0)
-                    const rel_new_box_centery = (predy as Number as number) * (224.0)
-                    const rel_new_box_width = (pred_width as Number as number) * (224.0)
-                    const rel_new_box_height = (pred_height as Number as number) * (224.0)
-
-                    const rel_new_xmin = rel_new_box_centerx - (rel_new_box_width / 2)
-                    const rel_new_ymin = rel_new_box_centery - (rel_new_box_height / 2)
-                    const rel_new_xmax = rel_new_xmin + rel_new_box_width
-                    const rel_new_ymax = rel_new_ymin + rel_new_box_height
-
-                    const bbox: IRect = {
-                        x: new_box_centerx - (new_box_width / 2) + scaled_rect.x,
-                        y: new_box_centery - (new_box_height / 2) + scaled_rect.y,
-                        width: new_box_width,
-                        height: new_box_height
+                    if (!this.model.is_loaded) {
+                        store.dispatch(updateActivePopupType(PopupWindowType.LOADER))
+                        await this.model.load().then(res => (console.log("Model Loaded")));
+                        store.dispatch(updateActivePopupType(null))
+                        this.model.is_loaded = true;
                     }
+                    PopupActions.close()
+                    const rgba = AutoRectUtil.reshape_image_data(crop_data.data)
+                    const norm_img = AutoRectUtil.normalize_image_data(rgba[0], rgba[1], rgba[2], rgba[3])
 
-                    ctx.beginPath();
-                    ctx.moveTo(rel_new_xmin, rel_new_ymin);
-                    ctx.lineTo(rel_new_xmin, rel_new_ymax);
-                    ctx.lineTo(rel_new_xmax, rel_new_ymax);
-                    ctx.lineTo(rel_new_xmax, rel_new_ymin);
-                    ctx.lineTo(rel_new_xmin, rel_new_ymin);
-                    ctx.stroke();
-
-                    console.log(bbox)
-                    this.addAutoRectLabel(bbox)
-
-
-                    console.log(outputTensor)
-
-
-                    // const model = await tf.loadGraphModel('http://127.0.0.1:5000/static/tfjs_effloc_model/model.json')
-                    // console.log(model)
-                    // const preds = model.predict(tf.randomNormal([1, 4, 224, 224]))
-                    // console.log(preds)
-
-                    // const model = await cocoSsd.load().then();
-                    // PopupActions.close()
-                    // this.isModelLoaded = true;
-                    // console.log(AISelector.isAIObjectDetectorModelLoaded())
-                    // const preds = await model.detect(crop_img);
-                    // if (preds[0] === undefined) {
-                    //     return;
-                    // }
-                    // console.log(preds[0].class)
-                    // const object_rect = {
-                    //     x: (scaled_rect.x + preds[0].bbox[0]),
-                    //     y: (scaled_rect.y + preds[0].bbox[1]),
-                    //     width: preds[0].bbox[2],
-                    //     height: preds[0].bbox[3]
-                    // };
-                    // this.addAutoRectLabel(object_rect)
-                })().then(res => {
-                    const crop_img: HTMLImageElement = new Image()
-                    crop_img.src = canvas.toDataURL();
-                    w.document.write(crop_img.outerHTML)
-                }
-                );
-                // this.addAutoRectLabel(rect)
-
+                    // Call inferance API
+                    await fetch("http://127.0.0.1:5000/predict",
+                        {method: "POST",
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(norm_img),
+                        }).then(res => res.json())
+                        .then(res => this.addAutoRectLabel(AutoRectUtil.generate_bbox(res, scaled_rect)))
+                        .catch((error) => {
+                            throw new Error(error);
+                        });
+                })();
             }
 
             if (!!this.startResizeRectAnchor && !!activeLabelAutoRect) {
@@ -346,13 +196,13 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
     }
 
     private drawCurrentlyCreatedRect(mousePosition: IPoint, imageRect: IRect) {
-        if (!!this.startCreateRectPoint) {
+        if (!!this.startCreateAutoRectPoint) {
             const mousePositionSnapped: IPoint = RectUtil.snapPointToRect(mousePosition, imageRect);
             const activeRect: IRect = {
-                x: this.startCreateRectPoint.x,
-                y: this.startCreateRectPoint.y,
-                width: mousePositionSnapped.x - this.startCreateRectPoint.x,
-                height: mousePositionSnapped.y - this.startCreateRectPoint.y
+                x: this.startCreateAutoRectPoint.x,
+                y: this.startCreateAutoRectPoint.y,
+                width: mousePositionSnapped.x - this.startCreateAutoRectPoint.x,
+                height: mousePositionSnapped.y - this.startCreateAutoRectPoint.y
             };
             const activeRectBetweenPixels = RenderEngineUtil.setRectBetweenPixels(activeRect);
             DrawUtil.drawRect(this.canvas, activeRectBetweenPixels, this.config.lineActiveColor, this.config.lineThickness);
@@ -401,7 +251,7 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
                 return;
             }
             else if (RenderEngineUtil.isMouseOverCanvas(data)) {
-                if (!RenderEngineUtil.isMouseOverImage(data) && !!this.startCreateRectPoint)
+                if (!RenderEngineUtil.isMouseOverImage(data) && !!this.startCreateAutoRectPoint)
                     store.dispatch(updateCustomCursorStyle(CustomCursorStyle.MOVE));
                 else
                     RenderEngineUtil.wrapDefaultCursorStyleInCancel(data);
@@ -417,7 +267,7 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
     // =================================================================================================================
 
     public isInProgress(): boolean {
-        return !!this.startCreateRectPoint || !!this.startResizeRectAnchor;
+        return !!this.startCreateAutoRectPoint || !!this.startResizeRectAnchor;
     }
 
     private calculateRectRelativeToActiveImage(rect: IRect, data: EditorData): IRect {
@@ -492,7 +342,7 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
     }
 
     private startRectCreation(mousePosition: IPoint) {
-        this.startCreateRectPoint = mousePosition;
+        this.startCreateAutoRectPoint = mousePosition;
         store.dispatch(updateActiveLabelId(null));
         EditorActions.setViewPortActionsDisabledStatus(true);
     }
@@ -503,53 +353,9 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
     }
 
     private endRectTransformation() {
-        this.startCreateRectPoint = null;
+        this.startCreateAutoRectPoint = null;
         this.startResizeRectAnchor = null;
         EditorActions.setViewPortActionsDisabledStatus(false);
-    }
-
-
-    private reshape_image_data(img_data: any): [number[], any] {
-        let r: number[] = []
-        let g: number[] = []
-        let b: number[] = []
-        let a = new Array<number>(50176);
-        a.fill(0)
-        a[25200] = 255
-        let rgba = [r, g, b, a]
-
-        let full_img: number[] = []
-        for (let i = 0; i < img_data.length; i += 4) {
-            r.push(img_data[i])
-            g.push(img_data[i + 1])
-            b.push(img_data[i + 2])
-            //a.push(img_data[i + 3])
-        }
-        full_img = full_img.concat(r)
-        full_img = full_img.concat(g)
-        full_img = full_img.concat(b)
-        full_img = full_img.concat(a)
-        return [full_img, rgba]
-    }
-
-    private normalize_image_data(r, g, b, a) {
-        const means = [5.4271e-01, 5.7049e-01, 5.8811e-01, 1.9930e-05]
-        const stds = [0.0892, 0.0858, 0.0831, 0.0045]
-        const new_r = [];
-        r.forEach((el, index) => new_r.push(((el / 255.0) - means[0]) / stds[0]))
-        const new_g = [];
-        g.forEach((el, index) => new_g.push(((el / 255.0) - means[1]) / stds[1]))
-        const new_b = [];
-        b.forEach((el, index) => new_b.push(((el / 255.0) - means[2]) / stds[2]))
-        const new_a = [];
-        a.forEach((el, index) => new_a.push(((el / 255.0) - means[3]) / stds[3]))
-        const data_list = new_r.concat(new_g.concat(new_b.concat(new_a)))
-
-        console.log(data_list)
-        return data_list
-    }
-    private normalize(val, mean, std) {
-        return val - (mean / std)
     }
 }
 

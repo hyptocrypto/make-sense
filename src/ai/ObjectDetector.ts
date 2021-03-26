@@ -1,17 +1,16 @@
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import {DetectedObject, ObjectDetection} from '@tensorflow-models/coco-ssd';
-import {store} from "../index";
-import {updateObjectDetectorStatus} from "../store/ai/actionCreators";
-import {LabelType} from "../data/enums/LabelType";
-import {LabelsSelector} from "../store/selectors/LabelsSelector";
-import {AIObjectDetectionActions} from "../logic/actions/AIObjectDetectionActions";
-import {updateActiveLabelType} from "../store/labels/actionCreators";
+import { DetectedObject, ObjectDetection } from '@tensorflow-models/coco-ssd';
+import { store } from "../index";
+import { updateObjectDetectorStatus } from "../store/ai/actionCreators";
+import { LabelType } from "../data/enums/LabelType";
+import { LabelsSelector } from "../store/selectors/LabelsSelector";
+import { AIObjectDetectionActions } from "../logic/actions/AIObjectDetectionActions";
+import { updateActiveLabelType } from "../store/labels/actionCreators";
 
 export class ObjectDetector {
     private static model: ObjectDetection;
 
     public static loadModel(callback?: () => any) {
-        console.log("loading model")
         cocoSsd
             .load()
             .then((model: ObjectDetection) => {
@@ -35,21 +34,6 @@ export class ObjectDetector {
             .detect(image)
             .then((predictions: DetectedObject[]) => {
                 callback && callback(predictions)
-            })
-            .catch((error) => {
-                // TODO
-                throw new Error(error);
-            })
-        }
-        
-
-    public static predict_auto_rect(image: HTMLImageElement, callback?: (predictions: DetectedObject[]) => any) {
-        if (!ObjectDetector.model) return;
-
-        ObjectDetector.model
-            .detect(image)
-            .then((predictions: DetectedObject[]) => {
-            console.log(predictions)
             })
             .catch((error) => {
                 // TODO
