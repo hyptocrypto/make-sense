@@ -4,10 +4,9 @@ Flask-Cors==3.0.10
 itsdangerous==1.1.0
 Jinja2==2.11.3
 MarkupSafe==1.1.1
-numpy==1.20.1
-onnx==1.8.1
+numpy==1.20.2
 onnxruntime==1.7.0
 protobuf==3.15.6
 six==1.15.0
-typing-extensions==3.7.4.3
+uuid==1.30
 Werkzeug==1.0.1

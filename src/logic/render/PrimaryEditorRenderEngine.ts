@@ -15,6 +15,7 @@ import { PopupWindowType } from "../../data/enums/PopupWindowType";
 
 export class PrimaryEditorRenderEngine extends BaseRenderEngine {
     private config: RenderEngineConfig = new RenderEngineConfig();
+    public AutoRectpadding: number = 50
 
     public constructor(canvas: HTMLCanvasElement) {
         super(canvas);
@@ -65,6 +66,12 @@ export class PrimaryEditorRenderEngine extends BaseRenderEngine {
             { x: data.viewPortContentSize.width, y: mouse.y - 1 }
         )
     }
+    public updateAutoRectsize(new_size) {
+        if (new_size) {
+            this.AutoRectpadding = new_size;
+        }
+    };
+
     public renderBox(data: EditorData): void {
         if (!this.shouldRenderCrossHair(data)) return;
 
@@ -73,25 +80,25 @@ export class PrimaryEditorRenderEngine extends BaseRenderEngine {
             DrawUtil.drawLine(this.canvas, startPoint, endPoint, this.config.crossHairLineColor, 2)
         }
         let box: IRect = {
-            x: (mouse.x - this.config.crossHairPadding),
-            y: (mouse.y - this.config.crossHairPadding),
-            width: this.config.crossHairPadding * 2,
-            height: this.config.crossHairPadding * 2
+            x: (mouse.x - this.AutoRectpadding),
+            y: (mouse.y - this.AutoRectpadding),
+            width: this.AutoRectpadding * 2,
+            height: this.AutoRectpadding * 2
         }
         drawLine(
             { x: mouse.x, y: 0 },
-            { x: mouse.x - 2, y: mouse.y - this.config.crossHairPadding }
+            { x: mouse.x - 2, y: mouse.y - this.AutoRectpadding }
         )
         drawLine(
-            { x: mouse.x, y: mouse.y + this.config.crossHairPadding },
+            { x: mouse.x, y: mouse.y + this.AutoRectpadding },
             { x: mouse.x - 3, y: data.viewPortContentSize.height }
         )
         drawLine(
             { x: 0, y: mouse.y },
-            { x: mouse.x - this.config.crossHairPadding, y: mouse.y - 1 }
+            { x: mouse.x - this.AutoRectpadding, y: mouse.y - 1 }
         )
         drawLine(
-            { x: mouse.x + this.config.crossHairPadding, y: mouse.y },
+            { x: mouse.x + this.AutoRectpadding, y: mouse.y },
             { x: data.viewPortContentSize.width, y: mouse.y - 1 }
         )
         DrawUtil.drawRect(this.canvas, box, this.config.lineInactiveColor, 3)

@@ -11,7 +11,7 @@ export class AutoRectDetector {
         this.is_loaded = is_loaded
     }
     public async load() {
-        await this.session.loadModel("http://127.0.0.1:5000/static/tfjs_effloc_model/effloc.onnx")
+        await this.session.loadModel("http://54.157.122.103/static/tfjs_effloc_model/effloc.onnx")
         this.is_loaded = true;
     }
     public async predict(img_tensor: Tensor) {

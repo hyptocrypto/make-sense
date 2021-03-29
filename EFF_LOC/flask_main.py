@@ -1,27 +1,21 @@
-from flask import Flask, request, Response, json, url_for, send_from_directory, jsonify, make_response
-from flask_cors import CORS, cross_origin
+from flask import Flask, request, send_from_directory, jsonify,
+from flask_cors import CORS
 import os
-import re 
-import subprocess
 import onnxruntime
 import numpy as np
-
 
 app = Flask(__name__)
 CORS(app)
 
-session = onnxruntime.InferenceSession("./static/tfjs_effloc_model/effloc.onnx")
+session = onnxruntime.InferenceSession(
+    "./static/tfjs_effloc_model/effloc.onnx")
 input_name = session.get_inputs()[0].name
 output_name = session.get_outputs()[0].name
 
 
-@app.route('/', methods=['GET'])
-def json_data():
-    return f"<a href={url_for('static', filename='tfjs_effloc_model/model.json')}>file</a>"
-
 @app.route('/onnx', methods=['GET'])
-def json_data_onnx():   
-    return send_from_directory(directory="static", filename = "tfjs_effloc_model/effloc.onnx")
+def json_data_onnx():
+    return send_from_directory(directory="static", filename="tfjs_effloc_model/effloc.onnx")
 
 
 @app.route("/predict", methods=["POST"])
@@ -31,7 +25,8 @@ def predict():
         img_data = request.get_json()
 
         # img_data as nparray with correct shape
-        data_array = np.reshape(np.array(img_data, dtype=np.float32), (1, 4, 224, 224))
+        data_array = np.reshape(
+            np.array(img_data, dtype=np.float32), (1, 4, 224, 224))
 
         # Run inferance on the data_array
         preds_reponse = session.run([output_name], {input_name: data_array})
@@ -43,5 +38,6 @@ def predict():
         resp.headers["Content-Type"] = "application/json"
         return resp
 
+
 if __name__ == '__main__':
-    app.run( port="5000", debug=True)
+    app.run(port="5000", debug=True)

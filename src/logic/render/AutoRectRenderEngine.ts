@@ -40,9 +40,6 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
     // =================================================================================================================
     private startCreateAutoRectPoint: IPoint;
     private startResizeRectAnchor: RectAnchor;
-    public model = new AutoRectDetector();
-
-    private isModelLoaded: boolean = false;
 
     public constructor(canvas: HTMLCanvasElement) {
         super(canvas);
@@ -64,7 +61,8 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
                 if (!!anchorUnderMouse && rectUnderMouse.status === LabelStatus.ACCEPTED) {
                     store.dispatch(updateActiveLabelId(rectUnderMouse.id));
                     this.startRectResize(anchorUnderMouse);
-                } else {
+                }
+                else {
                     if (!!LabelsSelector.getHighlightedLabelId())
                         store.dispatch(updateActiveLabelId(LabelsSelector.getHighlightedLabelId()));
                     else
@@ -84,52 +82,32 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
             if (!!this.startCreateAutoRectPoint) {
                 const minX: number = this.startCreateAutoRectPoint.x;
                 const minY: number = this.startCreateAutoRectPoint.y;
-                const box_width: number = 80 // Should be dynamic based on desired object size
-                const box_height: number = 80 // Should be dynamic based on desired object size
+                const box_width: number = 100 // Should be dynamic based on desired object size
+                const box_height: number = 100 // Should be dynamic based on desired object size
 
                 // Create rect within crosshairs on viewport and image
-                const rect = { 
+                const rect: IRect = {
                     x: minX - (box_width / 2),
-                    y: minY - (box_height / 2), 
-                    width: box_width, 
-                    height: box_height}
-
-                const scaled_rect = RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data);
-
+                    y: minY - (box_height / 2),
+                    width: box_width,
+                    height: box_height
+                }
+                const scaled_rect: IRect = RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data);
 
                 // Create Image element from current image data
                 const imageData: ImageData = LabelsSelector.getActiveImageData();
+                const img_data: HTMLImageElement = ImageRepository.getById(imageData.id);
 
-                // const imageid: string = imageData.id;
-
-                const img_data = ImageRepository.getById(imageData.id);
-                
                 // Grab crop of image
-                const crop_data  = AutoRectUtil.make_crop(scaled_rect, img_data);
+                const crop_data = AutoRectUtil.make_crop(scaled_rect, img_data);
 
-                // Run prediction on cropped image and plot bounding box 
-                (async () => {
-                    if (!this.model.is_loaded) {
-                        store.dispatch(updateActivePopupType(PopupWindowType.LOADER))
-                        await this.model.load().then(res => (console.log("Model Loaded")));
-                        store.dispatch(updateActivePopupType(null))
-                        this.model.is_loaded = true;
-                    }
-                    PopupActions.close()
-                    const rgba = AutoRectUtil.reshape_image_data(crop_data.data)
-                    const norm_img = AutoRectUtil.normalize_image_data(rgba[0], rgba[1], rgba[2], rgba[3])
+                const rgba: number[][] = AutoRectUtil.reshape_image_data(crop_data.data)
+                const norm_img: number[] = AutoRectUtil.normalize_image_data(rgba)
 
-                    // Call inferance API
-                    await fetch("http://127.0.0.1:5000/predict",
-                        {method: "POST",
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(norm_img),
-                        }).then(res => res.json())
-                        .then(res => this.addAutoRectLabel(AutoRectUtil.generate_bbox(res, scaled_rect)))
-                        .catch((error) => {
-                            throw new Error(error);
-                        });
-                })();
+                if (!!norm_img && !!scaled_rect) {
+                    // Run prediction on cropped image and plot bounding box 
+                    AutoRectUtil.predict(norm_img, scaled_rect, this.addAutoRectLabel)
+                }
             }
 
             if (!!this.startResizeRectAnchor && !!activeLabelAutoRect) {
