@@ -82,31 +82,32 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
             if (!!this.startCreateAutoRectPoint) {
                 const minX: number = this.startCreateAutoRectPoint.x;
                 const minY: number = this.startCreateAutoRectPoint.y;
-                const box_width: number = 100 // Should be dynamic based on desired object size
-                const box_height: number = 100 // Should be dynamic based on desired object size
+                const boxWidth: number = 100 // Should be dynamic based on desired object size
+                const boxHeight: number = 100 // Should be dynamic based on desired object size
 
                 // Create rect within crosshairs on viewport and image
                 const rect: IRect = {
-                    x: minX - (box_width / 2),
-                    y: minY - (box_height / 2),
-                    width: box_width,
-                    height: box_height
+                    x: minX - (boxWidth / 2),
+                    y: minY - (boxHeight / 2),
+                    width: boxWidth,
+                    height: boxHeight
                 }
-                const scaled_rect: IRect = RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data);
+                const scaledRect: IRect = RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data);
 
                 // Create Image element from current image data
-                const imageData: ImageData = LabelsSelector.getActiveImageData();
-                const img_data: HTMLImageElement = ImageRepository.getById(imageData.id);
+                const image: ImageData = LabelsSelector.getActiveImageData();
+                const imgData: HTMLImageElement = ImageRepository.getById(image.id);
 
                 // Grab crop of image
-                const crop_data = AutoRectUtil.make_crop(scaled_rect, img_data);
+                const cropData = AutoRectUtil.makeCrop(scaledRect, imgData);
 
-                const rgba: number[][] = AutoRectUtil.reshape_image_data(crop_data.data)
-                const norm_img: number[] = AutoRectUtil.normalize_image_data(rgba)
+                // Normalize the data
+                const rgba: number[][] = AutoRectUtil.reshapeImageData(cropData.data)
+                const normImg: number[] = AutoRectUtil.normalizeRgba(rgba)
 
-                if (!!norm_img && !!scaled_rect) {
+                if (!!normImg && !!scaledRect) {
                     // Run prediction on cropped image and plot bounding box 
-                    AutoRectUtil.predict(norm_img, scaled_rect, this.addAutoRectLabel)
+                    AutoRectUtil.predict(normImg, scaledRect, this.addAutoRectLabel)
                 }
             }
 

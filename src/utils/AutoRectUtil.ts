@@ -4,7 +4,7 @@ export class AutoRectUtil {
     private static api_endpoint: string = "http://54.157.122.103/predict"
     // private static api_endpoint: string = "http://localhost:5000/onnx"
 
-    public static reshape_image_data(img_data: any): number[][] {
+    public static reshapeImageData(img_data: any): number[][] {
         let r: number[] = []
         let g: number[] = []
         let b: number[] = []
@@ -21,7 +21,7 @@ export class AutoRectUtil {
 
         return [r, g, b, a]
     }
-    public static normalize_image_data(rgba: number[][]): number[] {
+    public static normalizeRgba(rgba: number[][]): number[] {
         const means = [5.4271e-01, 5.7049e-01, 5.8811e-01, 1.9930e-05]
         const stds = [0.0892, 0.0858, 0.0831, 0.0045]
         const new_r: number[] = [];
@@ -36,7 +36,7 @@ export class AutoRectUtil {
 
         return new_r.concat(new_g.concat(new_b.concat(new_a)))
     }
-    public static generate_bbox(cords: number[], scaled_rect: IRect): IRect {
+    public static generateBbox(cords: number[], scaled_rect: IRect): IRect {
         const predx: number = cords[0]
         const predy: number = cords[1]
         const pred_width: number = cords[2]
@@ -60,7 +60,7 @@ export class AutoRectUtil {
         }
         return bbox
     }
-    public static make_crop(scaled_rect: IRect, img_data: any): ImageData {
+    public static makeCrop(scaled_rect: IRect, img_data: any): ImageData {
         const img: HTMLImageElement = new Image();
         img.src = img_data.src;
 
@@ -88,7 +88,7 @@ export class AutoRectUtil {
                 body: JSON.stringify(norm_img),
             })
             .then(res => res.json())
-            .then(res => { callback(this.generate_bbox(res, scaled_rect)) })
+            .then(res => { callback(this.generateBbox(res, scaled_rect)) })
             .catch((error) => {
                 // TODO: MakeSense Error popup
                 window.alert("Inference API not responding. Please try again later.")
