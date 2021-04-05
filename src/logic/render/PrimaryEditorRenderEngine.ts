@@ -37,7 +37,7 @@ export class PrimaryEditorRenderEngine extends BaseRenderEngine {
         this.drawImage(EditorModel.image, ViewPortActions.calculateViewPortContentImageRect());
         this.renderCrossHair(data);
     }
-    public render_autoRect(data: EditorData): void {
+    public renderAutoRect(data: EditorData): void {
         this.drawImage(EditorModel.image, ViewPortActions.calculateViewPortContentImageRect());
         this.renderBox(data);
     }

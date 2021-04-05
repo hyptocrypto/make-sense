@@ -26,10 +26,7 @@ import { EditorActions } from "../actions/EditorActions";
 import { GeneralSelector } from "../../store/selectors/GeneralSelector";
 import { LabelStatus } from "../../data/enums/LabelStatus";
 import { LabelUtil } from "../../utils/LabelUtil";
-import { PopupWindowType } from "../../data/enums/PopupWindowType";
-import { updateActivePopupType } from "../../store/general/actionCreators";
-import { PopupActions } from "../actions/PopupActions";
-import { AutoRectDetector } from "../../ai/AutoRectDetector"
+
 
 
 
@@ -70,7 +67,6 @@ export class AutoRectRenderEngine extends BaseRenderEngine {
                 }
             } else if (isMouseOverImage) {
                 this.startRectCreation(data.mousePositionOnViewPortContent);
-
             }
         }
     };

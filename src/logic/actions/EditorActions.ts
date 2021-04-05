@@ -70,7 +70,7 @@ export class EditorActions {
         DrawUtil.clearCanvas(EditorModel.canvas);
         const activeLabelType: LabelType = LabelsSelector.getActiveLabelType()
         if (activeLabelType === LabelType.AUTORECT) {
-            EditorModel.primaryRenderingEngine.render_autoRect(EditorActions.getEditorData());
+            EditorModel.primaryRenderingEngine.renderAutoRect(EditorActions.getEditorData());
         }
         else {
             EditorModel.primaryRenderingEngine.render(EditorActions.getEditorData());
